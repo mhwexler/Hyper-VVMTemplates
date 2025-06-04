@@ -881,7 +881,7 @@ function New-HvtVMUnattendISOTask {
         $ScheduledTask | Unregister-ScheduledTask -Confirm:$false
     }
     $ScheduledTaskTrigger =  New-ScheduledTaskTrigger -Daily -At 00:00
-    $ScheduledTaskAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -Command {Remove-VMUnattendISO -LogFilePath C:\Temp\RemoveVMUnattendISO.log}"
+    $ScheduledTaskAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -Command "Remove-HvtVMUnattendISO -LogFilePath C:\Temp\RemoveVMUnattendISO.log"'
     $ScheduledTask = Register-ScheduledTask -TaskName "Remove-HvtVMUnattendISO" -Trigger $ScheduledTaskTrigger -Action $ScheduledTaskAction -Description "Removes Autounattend.iso files and associated virtual DVDs" -RunLevel Highest -User 'SYSTEM'
     $ScheduledTask.Triggers[0].Repetition.Interval = "PT15M"
     $ScheduledTask.Triggers[0].Repetition.Duration = "P1D"
