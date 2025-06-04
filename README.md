@@ -19,28 +19,25 @@ This procedure documents the steps necessary to configure a workbench server and
 | :------: | ------ | ------ |
 | 1 | Install the Windows Hyper-V Feature.| `Install-WindowsFeature -Name Hyper-V -IncludeManagementTools -Restart` |
 | 2 | Install the [Windows Assessment Toolkit (ADK)](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install) _Deployment Tools_| |
-| 3 | Create the VM Switch.| `New-VMSwitch -Name 'Default Switch' -AllowManagementOS $true -NetAdapterName Ethernet` |
-| 4 | Format the second drive using ReFS and create the VMs. VMTemplates, NoPromptISOs, and WindowsProductISOs folders. | `Initalize-Disk -Number 1 -PartitionStyle GPT` |
+| 3 | Install the Hyper-VVMTemplates module. | `Install-Module -Name Hyper-VVMTemplates` |
+| 4 | Create the VM Switch.| `New-VMSwitch -Name 'Default Switch' -AllowManagementOS $true -NetAdapterName Ethernet` |
+| 5 | Format the second drive using ReFS and create the VMs. VMTemplates, NoPromptISOs, and WindowsProductISOs folders. | `Initalize-Disk -Number 1 -PartitionStyle GPT` |
 | | | `$Partition = New-Partition -DiskNumber 1 -UseMaximumSize -DriveLetter F` |
 | | | `Format-Volume -Partition $Partition -FileSystem ReFS `|
 | | | ` New-Item -Path F:\VMs -ItemType Directory` |
 | | | `New-Item -Path F:\NoPromptISOs -ItemType Directory` |
 | | | `New-Item -Path F:\VMTemplates -ItemType Directory` |
 | | | `New-Item -Path F:\WindowsProductISOs -ItemType Directory` |
-| 5 | Create the scheduled task to run __Remove-HvtVMUnattendISO__ every 15 minutes to clean up the Autounattend.iso files which may contain clear text passwords. | `$ScheduledTaskTrigger =  New-ScheduledTaskTrigger -Daily -At 00:00` |
-| | | `$ScheduledTaskAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -Command {-NoProfile -Command {F:\Scripts\Remove-VMUnattendISO -LogFilePath C:\Temp\VMUnattendISO.log}"` |
-| | | `$ScheduledTask = Register-ScheduledTask -TaskName "Remove-HvtVMUnattendISO" -Trigger $ScheduledTaskTrigger -Action $ScheduledTaskAction -Description "Removes Autounattend.iso files and associated virtual DVDs" -RunLevel Highest -User 'SYSTEM'` |
-| | | `$ScheduledTask.Triggers[0].Repetition.Interval = "PT15M"` |
-| | | `$ScheduledTask.Triggers[0].Repetition.Duration = "P1D"` |
-| 6 | Download the Windows Product ISOs for Windows Server 2025 and Windows 11 Enterprise to the F:\WindowsProductISOs folder. | `Start-BitsTransfer -Source 'https://go.microsoft.com/fwlink/?linkid=2293312&clcid=0x409&culture=en-us&country=us' -Destination F:\WindowsProductISOs\WindowsServer2025Eval.iso\` |
+| 6 | Create the scheduled task to run __Remove-HvtVMUnattendISO__ every 15 minutes to clean up the Autounattend.iso files which may contain clear text passwords. | `New-HvtVMUnattendISOTask` |
+| 7 | Download the Windows Product ISOs for Windows Server 2025 and Windows 11 Enterprise to the F:\WindowsProductISOs folder. | `Start-BitsTransfer -Source 'https://go.microsoft.com/fwlink/?linkid=2293312&clcid=0x409&culture=en-us&country=us' -Destination F:\WindowsProductISOs\WindowsServer2025Eval.iso\` |
 | | | `Start-BitsTransfer -Source 'https://go.microsoft.com/fwlink/?linkid=2289031&clcid=0x409&culture=en-us&country=us' -Destination F:\WindowsProductISOs\Windows11EnterpriseEval.iso` |
-| 7 | Create the NoPromp ISOs which are required to fully automate the installation from Windows Product ISOs. | `New-HvtNoPromptInstallISO -WindowsISOPath F:\WindowsProductISOs\WindowsServer2025Eval.iso -NoPromptISODirectory F:\NoPromptISOs -Verbose` |
+| 8 | Create the NoPromp ISOs which are required to fully automate the installation from Windows Product ISOs. | `New-HvtNoPromptInstallISO -WindowsISOPath F:\WindowsProductISOs\WindowsServer2025Eval.iso -NoPromptISODirectory F:\NoPromptISOs -Verbose` |
 | | | `New-HvtNoPromptInstallISO -WindowsISOPath F:\WindowsProductISOs\Windows11EnterpriseEval.iso -NoPromptISODirectory F:\NoPromptISOs -Verbose` |
-| 8 | Create the VMs that will be used to create the VM Templates. | `$AdministratorPassword = Read-Host -AsSecureString` |
+| 9 | Create the VMs that will be used to create the VM Templates. | `$AdministratorPassword = Read-Host -AsSecureString` |
  | | | `New-HvtVirtualMachine -VMName Srv2025StdGUI -VMTemplatePath F:\VMTemplates -OperatingSystem WindowsServer2025Standard -ServerOSVersion GUI -AdministratorPassword $AdministratorPassword -VMPath F:\VMs -SwitchName 'Default Switch' -Verbose` |
 | | | `New-HvtVirtualMachine -VMName Win11Ent -VMTemplatePath F:\VMTemplates -OperatingSystem Windows11 -DesktopOSVersion Enterprise -AdministratorPassword $AdministratorPassword -VMPath F:\VMs -SwitchName 'Default Switch' -Verbose` |
-| 9 | Logon to each of the VMs and download the latest patches from Microsoft.| |
-| 10 | Create VMs to from the VM Templates to verify they are working properly. | `New-HvtVirtualMachine -VMName SERVER1 -VMPath F:\VMs -VMTemplatePath F:\VMTemplates\Srv2025StdGUI.vhdx -OperatingSystem WindowsServer2025Standard -ServerOSVersion GUI -AdministratorPassword $AdministratorPassword -SwitchName 'Default Switch' -TimeZone 'US Mountain Standard Time' -Verbose`
+| 10 | Logon to each of the VMs and download the latest patches from Microsoft.| |
+| 11 | Create VMs to from the VM Templates to verify they are working properly. | `New-HvtVirtualMachine -VMName SERVER1 -VMPath F:\VMs -VMTemplatePath F:\VMTemplates\Srv2025StdGUI.vhdx -OperatingSystem WindowsServer2025Standard -ServerOSVersion GUI -AdministratorPassword $AdministratorPassword -SwitchName 'Default Switch' -TimeZone 'US Mountain Standard Time' -Verbose`
 | | | `New-HvtVirtualMachine -VMName DESKTOP1 -VMPath F:\VMs -VMTemplatePath F:\VMTemplates\Win11Ent.vhdx -OperatingSystem Windows11 -DesktopOSVersion Enterprise -AdministratorPassword $AdministratorPassword -SwitchName 'Default Switch' -TimeZone 'US Eastern Standard Time' -Verbose` | 
 
 ## VM Creation Examples
