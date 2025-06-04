@@ -2,7 +2,7 @@
 
 # Copyright © 2025 Mason Wexler
 #
-# This software is licened under the The MIT License (MIT) - https://mit-license.org/
+# This software is licensed under the The MIT License (MIT) - https://mit-license.org/
 #
 # All functionality is implemented in the Hyper-VVMTemplate.psm1 module which must be run on a Windows Server that has the Windows
 # Hyper-V feature and the Windows Assessment Toolkit (ADK) for Windows Server 2022 installed.
@@ -220,11 +220,6 @@ function New-HvtVMTemplate {
 
     $Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     Invoke-Command -Session $VMSession -ScriptBlock {c:\Windows\system32\cmd.exe /C C:\Windows\System32\Sysprep\sysprep.exe /generalize /shutdown /oobe}
-
-    # Wait for the Sysprep to complete
-    #$EstimatedSeconds = 60*7 # 7 Minutes
-
-   
 
     $ElapsedTime = $Stopwatch.Elapsed
     $StatusMessage = [string]::Format("Sysprep of $VMName Completed; Elapsed Time {0:d2}:{1:d2}:{2:d2}", $ElapsedTime.Hours, $ElapsedTime.Minutes, $ElapsedTime.Seconds)
@@ -845,7 +840,7 @@ function Remove-HvtVMUnattendISO {
     .DESCRIPTION
     Remove AutoUnattend.iso files and the virtual DVD drives that were used to perform an automated
     Windows installation by the New-HvtVirtualMachine function for all VMs on a Hyper-V server.  This
-    fuction is intended to be configured to run on host servers as a scheduled task.
+    function is intended to be configured to run on host servers as a scheduled task.
 
     .PARAMETER LogFilePath
     Specifies the path of the log file.
@@ -1837,7 +1832,7 @@ function Write-HvtMessage {
     Specifies the message is displayed as host output. ForegroundColor may be specified.
 
     .PARAMETER WriteVerbose
-    Specifies the message is displayed if the -Verbose option was specified on the primar function.
+    Specifies the message is displayed if the -Verbose option was specified on the primary function.
 
     .PARAMETER WriteWaring
     Specifies the message is displayed as a warning.
