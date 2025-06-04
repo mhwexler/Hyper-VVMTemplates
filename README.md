@@ -12,6 +12,7 @@ Copyright (c) 2025 Mason Wexler.  This software is licensed under the [MIT Licen
     multiple virtual disks in implement large storage spaces volumes.
 - __New-HvtISO__ - Create an ISO from a folder using the Windows ADK Oscdimg utility.
 - __Remove-HvtVMUnattendISO__ - Remove AutoUnattend.iso files and the virtual DVD drives that were used to perform an automated Windows installation by the New-HvtVirtualMachine function for all VMs on a Hyper-V server.  This function is intended to be configured to run on host servers as a scheduled task.
+- __New-HvtVMUnattendISOTask__ - Create a schedule task to run the Remove-HvtVMUnattendISO every 15 minutes to clean up AutoUnattend.iso files and their associated virtual DVD drives..
 
 ## Template Workbench Installation Procedure
 This procedure documents the steps necessary to configure a workbench server and create the initial VM Templates. The workbench may be run on a physical server or a VM configured for [Nested Virtualization](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/user-guide/enable-nested-virtualization). The server must have the Hyper-V Feature and the Microsoft Windows Assessment and Deployment Kit (ADK) installed and should have at least 2 Cores and 12 GB of memory.  It is recommended that a ReFS formatted volume is used to store the VM Templates and VMs to take advantage of ReFS Block Cloning.
@@ -24,7 +25,7 @@ This procedure documents the steps necessary to configure a workbench server and
 | 5 | Format the second drive using ReFS and create the VMs. VMTemplates, NoPromptISOs, and WindowsProductISOs folders. | `Initalize-Disk -Number 1 -PartitionStyle GPT` |
 | | | `$Partition = New-Partition -DiskNumber 1 -UseMaximumSize -DriveLetter F` |
 | | | `Format-Volume -Partition $Partition -FileSystem ReFS `|
-| | | ` New-Item -Path F:\VMs -ItemType Directory` |
+| | | `New-Item -Path F:\VMs -ItemType Directory` |
 | | | `New-Item -Path F:\NoPromptISOs -ItemType Directory` |
 | | | `New-Item -Path F:\VMTemplates -ItemType Directory` |
 | | | `New-Item -Path F:\WindowsProductISOs -ItemType Directory` |
@@ -43,29 +44,30 @@ This procedure documents the steps necessary to configure a workbench server and
 ## VM Creation Examples
 | 1. Create a VM from a Product ISO and prompt for the Administrator password before logging on the first time. |
 | :------ | 
-| `New-HvtVirtualMachine -VMName SERVER2 -VMPath F:\VMs -WindowsInstallISO F:\NoPromptISOs\WindowsServer2025Eval_NoPrompt.iso -OperatingSystem WindowsServer2025Standard` |
+| `New-HvtVirtualMachine -VMName SERVER1 -VMPath F:\VMs -WindowsInstallISO F:\NoPromptISOs\WindowsServer2025Eval_NoPrompt.iso -OperatingSystem WindowsServer2025Standard` |
 
-| 2. Create a VM from a Product ISO and specify the Timezone (Administrator password is optional when VMs are created from Product ISOs) |
+| 2. Create a VM from a Product ISO and specify the Timezone to Mountain Time (Administrator password is optional when VMs are created from Product ISOs). |
 | :------ | 
 | `$AdministratorPassword = Read-Host -AsSecureString` |
-| `New-HvtVirtualMachine -VMName TESTVM1 -WindowsInstallISO C:\NoPromptISOs\WindowsServer2025Eval_NoPrompt.iso -OperatingSystem WidowsServer2025Standard -AdministratorPassword $AdministratorPassword` |
+| `New-HvtVirtualMachine -VMName SERVER2 -VMPath F:\VMs -WindowsInstallISO F:\NoPromptISOs\WindowsServer2025Eval_NoPrompt.iso -OperatingSystem WindowsServer2025Standard -AdministratorPassword $AdministratorPassword -TimeZone 'US Mountain Standard Time'` |
 
-| 3. Create a VM from a Template (Administrator password is required when VMs are created from Templates) |
+| 3. Create a VM from a Template (Administrator password is required when VMs are created from Templates). |
 | :------ | 
 | `$AdministratorPassword = Read-Host -AsSecureString` |
-| `New-HvtVirtualMachine -VMName SERVER1 -VMPath F:\VMs -VMTemplatePath F:\VMTemplates\Srv2025StdGUI.vhdx -OperatingSystem WindowsServer2025Standard -ServerOSVersion GUI -AdministratorPassword $AdministratorPassword -SwitchName 'Default Switch' -TimeZone 'US Mountain Standard Time' -Verbose` |
+| `New-HvtVirtualMachine -VMName SERVER3 -VMPath F:\VMs -VMTemplatePath F:\VMTemplates\Srv2025StdGUI.vhdx -OperatingSystem WindowsServer2025Standard -ServerOSVersion GUI -AdministratorPassword $AdministratorPassword -SwitchName 'Default Switch' -TimeZone 'US Mountain Standard Time' -Verbose` |
 
-| 4. Create a VM from a Template for Server Joined To A Domain |
+| 4. Create a VM from a Template for Server Joined To A Domain. |
 | :------ |
 | `$AdministratorPassword = Read-Host -AsSecureString` |
 | `$DomainJoinCredential = Get-Credential` |
-| `New-HvtVirtualMachine -VMName SERVER2  -OperatingSystem WindowsServer2025Standard -VMPath C:\ClusterStorage\Volume01\VMs -WindowsInstallISO C:\ClusterStorage\Volume01\NoPromptISOs\en-us_windows_server_2025_x64_dvd_b7ec10f3_NoPrompt.iso -TimeZone 'US Mountain Standard Time' -AdministratorPassword $AdministratorPassword -SwitchName PublicVMSwitch -EnableRemoteDesktop -DomainName dom1.com -DomainOUPath 'OU=Servers,OU=_DOM1,DC=dom1,DC=com' -DomainJoinCredential $DomainJoinCredential` |
+| `New-HvtVirtualMachine -VMName SERVER4  -OperatingSystem WindowsServer2025Standard -VMPath C:\ClusterStorage\Volume01\VMs -WindowsInstallISO C:\ClusterStorage\Volume01\NoPromptISOs\en-us_windows_server_2025_x64_dvd_b7ec10f3_NoPrompt.iso  -AdministratorPassword $AdministratorPassword -SwitchName PublicVMSwitch -EnableRemoteDesktop -DomainName dom1.com -DomainOUPath 'OU=Servers,OU=_DOM1,DC=dom1,DC=com' -DomainJoinCredential $DomainJoinCredential` |
 
-| 5. Create a VM from a Template and specify the TCP/IP configuration |
+| 5. Create a VM from a Template and specify the TCP/IP configuration. |
 | :------ |
 | `$AdministratorPassword = Read-Host -AsSecureString` |
-| `New-HvtVirtualMachine -VMName SERVER1 -VMPath F:\VMs -VMTemplatePath F:\VMTemplates\Srv2025StdGUI.vhdx -OperatingSystem WindowsServer2025Standard -AdministratorPassword $AdministratorPassword -IPAddress 192.168.1.2 -SubnetPrefix 24 -DefaultGateway 192.168.1.1 -DNSServers '8.8.8.8,4.4.4.4'
-` |
+| `New-HvtVirtualMachine -VMName SERVER5 -VMPath F:\VMs -VMTemplatePath F:\VMTemplates\Srv2025StdGUI.vhdx -OperatingSystem WindowsServer2025Standard -AdministratorPassword $AdministratorPassword -IPAddress 192.168.1.2 -SubnetPrefix 24 -DefaultGateway 192.168.1.1 -DNSServers '8.8.8.8,4.4.4.4'` |
+
+| 6. Create a Windows 11 Desktop VM. | `New-HvtVirtualMachine -VMName DESKTOP1 -VMPath F:\VMs -VMTemplatePath F:\VMTemplates\Win11Ent.vhdx -OperatingSystem Windows11 -AdministratorPassword $AdministratorPassword -SwitchName 'Default Switch'` |
 ## Usage Notes
 1. The local Administrator and Domain Join Credential passwords as passed to functions as [SecureStrings](https://learn.microsoft.com/en-us/dotnet/fundamentals/runtime-libraries/system-security-securestring); however, they are unencrypted within the functions and stored in clear text in the Unattend.xml files.  While the Unattend.xml files are automatically erased, to mitigate the potential to be exploited by malicious attackers they should be tightly scoped and not shared.  In addition, local Administrator passwords should be changed on a regular basis using a password manager such as Microsoft’s free [Local Administrator Password Solution (LAPS)]( https://www.microsoft.com/en-us/download/details.aspx?id=46899&gt&msockid=11ce442110d26fae2654515411ad6eb1).
 2. To implement automated installation of VMs from the Windows Product ISOs, the Autounnatend.xml file which may contain clear text passwords is converted into an ISO and mounted on the VM.  To ensure that these ISOs are erased from the VMs, a scheduled task should be configured on all hosts that runs the __Remove-HvtVMUnattendISO__ function.
