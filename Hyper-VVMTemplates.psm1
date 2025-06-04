@@ -2,24 +2,17 @@
 
 # Copyright © 2025 Mason Wexler
 #
-# This software is licensed under the The MIT License (MIT) - https://mit-license.org/
+# This software is licensed under the The MIT License (MIT) - https://github.com/mhwexler/Hyper-VVMTemplates/blob/main/LICENSE
+#
+# Hyper-VVMTemplates is a PowerShell module that natively implements Windows Virtual Machine (VM) Templates on Hyper-V. VM Templates
+# are pre-configured VM images tailored for rapid deployment. VM Templates typically include operating systems, drivers, applications,
+# and configurations required for specific workloads. Additionally, the module provides functionality to create virtual machines with
+# an automated installation from a Windows Product ISO.
 #
 # All functionality is implemented in the Hyper-VVMTemplate.psm1 module which must be run on a Windows Server that has the Windows
 # Hyper-V feature and the Windows Assessment Toolkit (ADK) for Windows Server 2022 installed.
 #
-# To configure a server to implement VM Templates,
-#   - Install the Hyper-V Feature.
-#   - Install the Windows ADK for Windows Server 2022.
-#   - Import the Hyper-VVMTemplate module.
-#   - Set up folders for the Windows product ISOs, NoPrompt ISOs, and virtual machines.  It is highly recommended that these folders
-#     be on a volume formatted with ReFS in order to take advantage of Block cloning which reduces that time and disk space used
-#     copying VM Templates.
-#   - Download the Microsoft Windows product ISOs.
-#   - Create the NoPrompt ISOs from the Windows Product ISOs.
-#   - Create the Windows VMs used to create the VM Templates.  The VMs may be patched and configured with any desired settings.
-#   - Create the VM Templates from the Template VMs.
-#   - Set up the Remove-HvtVMUnattendISO function as a schedule task to remove unneeded DVD drives from VMs erase autounattend.iso files which may contain
-#     clear text passwords.
+# For more information please refer to the Hyper-VVMTemplates project page https://github.com/mhwexler/Hyper-VVMTemplates
 
 function New-HvtNoPromptInstallISO {
 <#
@@ -850,6 +843,7 @@ function Remove-HvtVMUnattendISO {
     )
 
     Write-HvtMessage -LogFilePath $LogFilePath -NewLogFile
+    Write-HvtMessage -LogFilePath $LogFilePath -Message "Running Remove-HvtVMUnattendISO at $((get-date).ToString())"
 
     # Remove the second DVD drive used for the unattend.xml file
     $VMs = Get-VM
@@ -869,6 +863,29 @@ function Remove-HvtVMUnattendISO {
             Write-HvtMessage -LogFilePath $LogFilePath -WriteVerbose -Message "Deleting AutoUnattend ISO $AutoUnattendIsoPath"
         }
     }
+}
+
+function New-HvtVMUnattendISOTask {
+
+<#
+    .SYNOPSIS
+    Create a schedule task to run the Remove-HvtVMUnattendISO function.
+
+    .DESCRIPTION
+    Create a schedule task to run the Remove-HvtVMUnattendISO every 15 minutes to clean up AutoUnattend.iso files
+    and their associated virtual DVD drives.
+#>
+
+    $ScheduledTask = Get-ScheduledTask -TaskName Remove-HvtVMUnattendISO -ErrorAction SilentlyContinue
+    if ($null -ne $ScheduledTask) {
+        $ScheduledTask | Unregister-ScheduledTask -Confirm:$false
+    }
+    $ScheduledTaskTrigger =  New-ScheduledTaskTrigger -Daily -At 00:00
+    $ScheduledTaskAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -Command {Remove-VMUnattendISO -LogFilePath C:\Temp\RemoveVMUnattendISO.log}"
+    $ScheduledTask = Register-ScheduledTask -TaskName "Remove-HvtVMUnattendISO" -Trigger $ScheduledTaskTrigger -Action $ScheduledTaskAction -Description "Removes Autounattend.iso files and associated virtual DVDs" -RunLevel Highest -User 'SYSTEM'
+    $ScheduledTask.Triggers[0].Repetition.Interval = "PT15M"
+    $ScheduledTask.Triggers[0].Repetition.Duration = "P1D"
+
 }
 
 ######################################################################################
@@ -1890,4 +1907,4 @@ function Write-HvtMessage {
     }
 }
 
-Export-ModuleMember -Function 'New-HvtNoPromptInstallISO','New-HvtVMTemplate','New-HvtVirtualMachine','Add-HvtVMDisk','New-HvtISO','Remove-HvtVMUnattendISO'
+Export-ModuleMember -Function 'New-HvtNoPromptInstallISO','New-HvtVMTemplate','New-HvtVirtualMachine','Add-HvtVMDisk','New-HvtISO','Remove-HvtVMUnattendISO', 'New-HvtVMUnattendISOTask'
