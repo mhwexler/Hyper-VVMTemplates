@@ -21,8 +21,8 @@ This procedure documents the steps necessary to configure a workbench server and
 | 1 | Install the Windows Hyper-V Feature.| `Install-WindowsFeature -Name Hyper-V -IncludeManagementTools -Restart` |
 | 2 | Install the [Windows Assessment Toolkit (ADK)](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install) _Deployment Tools_| |
 | 3 | Install the Hyper-VVMTemplates module. | `Install-Module -Name Hyper-VVMTemplates` |
-| 4 | Create the VM Switch.| `New-VMSwitch -Name 'Default Switch' -AllowManagementOS $true -NetAdapterName Ethernet` |
-| 5 | Format the second drive using ReFS and create the VMs. VMTemplates, NoPromptISOs, and WindowsProductISOs folders. | `Initalize-Disk -Number 1 -PartitionStyle GPT` |
+| 4 | Create the VM Switch.| `New-VMSwitch -Name PublicVMSwitch -AllowManagementOS $true -NetAdapterName Ethernet` |
+| 5 | Format the second drive using ReFS and create the VMs. VMTemplates, NoPromptISOs, and WindowsProductISOs folders. | `Initialize-Disk -Number 1 -PartitionStyle GPT` |
 | | | `$Partition = New-Partition -DiskNumber 1 -UseMaximumSize -DriveLetter F` |
 | | | `Format-Volume -Partition $Partition -FileSystem ReFS `|
 | | | `New-Item -Path F:\VMs -ItemType Directory` |
