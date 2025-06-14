@@ -30,7 +30,7 @@ This procedure documents the steps necessary to configure a workbench server and
 | | | `New-Item -Path F:\VMTemplates -ItemType Directory` |
 | | | `New-Item -Path F:\WindowsProductISOs -ItemType Directory` |
 | 6 | Create the scheduled task to run __Remove-HvtVMUnattendISO__ every 15 minutes to clean up the Autounattend.iso files which may contain clear text passwords. | `New-HvtVMUnattendISOTask` |
-| 7 | Download the Windows Product ISOs for Windows Server 2025 and Windows 11 Enterprise to the F:\WindowsProductISOs folder. | `Start-BitsTransfer -Source 'https://go.microsoft.com/fwlink/?linkid=2293312&clcid=0x409&culture=en-us&country=us' -Destination F:\WindowsProductISOs\WindowsServer2025Eval.iso\` |
+| 7 | Download the Windows Product ISOs for Windows Server 2025 and Windows 11 Enterprise to the F:\WindowsProductISOs folder. | `Start-BitsTransfer -Source 'https://go.microsoft.com/fwlink/?linkid=2293312&clcid=0x409&culture=en-us&country=us' -Destination F:\WindowsProductISOs\WindowsServer2025Eval.iso` |
 | | | `Start-BitsTransfer -Source 'https://go.microsoft.com/fwlink/?linkid=2289031&clcid=0x409&culture=en-us&country=us' -Destination F:\WindowsProductISOs\Windows11EnterpriseEval.iso` |
 | 8 | Create the NoPromp ISOs which are required to fully automate the installation from Windows Product ISOs. | `New-HvtNoPromptInstallISO -WindowsISOPath F:\WindowsProductISOs\WindowsServer2025Eval.iso -NoPromptISODirectory F:\NoPromptISOs -Verbose` |
 | | | `New-HvtNoPromptInstallISO -WindowsISOPath F:\WindowsProductISOs\Windows11EnterpriseEval.iso -NoPromptISODirectory F:\NoPromptISOs -Verbose` |
