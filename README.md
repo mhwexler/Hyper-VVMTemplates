@@ -35,11 +35,11 @@ This procedure documents the steps necessary to configure a workbench server and
 | 8 | Create the NoPromp ISOs which are required to fully automate the installation from Windows Product ISOs. | `New-HvtNoPromptInstallISO -WindowsISOPath F:\WindowsProductISOs\WindowsServer2025Eval.iso -NoPromptISODirectory F:\NoPromptISOs -Verbose` |
 | | | `New-HvtNoPromptInstallISO -WindowsISOPath F:\WindowsProductISOs\Windows11EnterpriseEval.iso -NoPromptISODirectory F:\NoPromptISOs -Verbose` |
 | 9 | Create the VMs that will be used to create the VM Templates. | `$AdministratorPassword = Read-Host -AsSecureString` |
- | | | `New-HvtVirtualMachine -VMName Srv2025StdGUI -VMTemplatePath F:\VMTemplates -OperatingSystem WindowsServer2025Standard -ServerOSVersion GUI -AdministratorPassword $AdministratorPassword -VMPath F:\VMs -SwitchName 'Default Switch' -Verbose` |
-| | | `New-HvtVirtualMachine -VMName Win11Ent -VMTemplatePath F:\VMTemplates -OperatingSystem Windows11 -DesktopOSVersion Enterprise -AdministratorPassword $AdministratorPassword -VMPath F:\VMs -SwitchName 'Default Switch' -Verbose` |
+ | | | `New-HvtVirtualMachine -VMName Srv2025StdGUI -VMPath F:\VMs -WindowsInstallISO F:\NoPromptISOs\WindowsServer2025Eval_NoPrompt.iso -OperatingSystem WindowsServer2025Standard -ServerOSVersion GUI -EnableRemoteDesktop -AdministratorPassword $AdministratorPassword -SwitchName PublicVMSwitch -Verbose` |
+| | | `New-HvtVirtualMachine -VMName Win11Ent -VMPath F:\VMs -WindowsInstallISO F:\NoPromptISOs\Windows11EnterpriseEval_NoPrompt.iso -OperatingSystem Windows11 -DesktopOSVersion Enterprise -AdministratorPassword $AdministratorPassword -SwitchName PublicVMSwitch -Verbose` |
 | 10 | Logon to each of the VMs and download the latest patches from Microsoft.| |
 | 11 | Create VMs to from the VM Templates to verify they are working properly. | `New-HvtVirtualMachine -VMName SERVER1 -VMPath F:\VMs -VMTemplatePath F:\VMTemplates\Srv2025StdGUI.vhdx -OperatingSystem WindowsServer2025Standard -ServerOSVersion GUI -AdministratorPassword $AdministratorPassword -SwitchName 'Default Switch' -TimeZone 'US Mountain Standard Time' -Verbose`
-| | | `New-HvtVirtualMachine -VMName DESKTOP1 -VMPath F:\VMs -VMTemplatePath F:\VMTemplates\Win11Ent.vhdx -OperatingSystem Windows11 -DesktopOSVersion Enterprise -AdministratorPassword $AdministratorPassword -SwitchName 'Default Switch' -TimeZone 'US Eastern Standard Time' -Verbose` | 
+| | | `New-HvtVirtualMachine -VMName Win11Ent -VMPath F:\VMs -WindowsInstallISO F:\NoPromptISOs\Windows11EnterpriseEval_NoPrompt.iso -OperatingSystem Windows11 -DesktopOSVersion Enterprise -AdministratorPassword $AdministratorPassword -SwitchName PublicVMSwitch -Verbose` | 
 
 ## VM Creation Examples
 | 1. Create a VM from a Product ISO and prompt for the Administrator password before logging on the first time. |
